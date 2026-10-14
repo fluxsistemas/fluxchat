@@ -1,0 +1,50 @@
+#
+services:
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.6 # evoapicloud/evolution-api:v2.2.3  atendai/evolution-api:v2.2.3
+    container_name: evolution_api
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - TZ=America/Asuncion
+    ports:
+      - "8002:8080"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./evolution_instances:/evolution/instances
+    networks:
+      - backend-chatbots_backend-net
+
+  postgres:
+    image: postgres:15
+    container_name: evolution_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: evolution_db
+      POSTGRES_USER: evolution_user
+      POSTGRES_PASSWORD: evolution_pass
+      TZ: America/Asuncion
+    volumes:
+      - postgres_data_evolution:/var/lib/postgresql/data
+    networks:
+      - backend-chatbots_backend-net
+
+  redis:
+    image: redis:7
+    container_name: evolution_redis
+    restart: always
+    volumes:
+      - redis_data_evolution:/data
+    networks:
+      - backend-chatbots_backend-net
+
+volumes:
+  postgres_data_evolution:
+  redis_data_evolution:
+
+networks:
+  backend-chatbots_backend-net:
+    external: true

@@ -1,0 +1,73 @@
+services:
+  evo-backend-postgres:
+    image: postgres:15
+    container_name: evolution_backend_postgres
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: America/Asuncion
+    volumes:
+      - postgres_data_backend:/var/lib/postgresql/data
+    networks:
+      - backend-chatbots_backend-net
+
+  evolution-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: evolution_backend_api
+    restart: always
+    env_file:
+      - .env
+    environment:
+      TZ: America/Asuncion
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - evo-backend-postgres
+      - evolution_rabbitmq
+    networks:
+      - backend-chatbots_backend-net
+
+  evolution_rabbitmq:
+    image: rabbitmq:3-management
+    container_name: evolution_rabbitmq
+    restart: always
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - backend-chatbots_backend-net
+
+  evolution_celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: evolution_celery_worker
+    restart: always
+    env_file:
+      - .env
+    environment:
+      TZ: America/Asuncion
+    volumes:
+      - .:/app
+    command: celery -A celery_app worker --loglevel=info --concurrency=10
+    depends_on:
+      - evo-backend-postgres
+      - evolution_rabbitmq
+    networks:
+      - backend-chatbots_backend-net
+
+volumes:
+  postgres_data_backend:
+
+networks:
+  backend-chatbots_backend-net:
+    external: true

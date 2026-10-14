@@ -1,0 +1,23 @@
+services:
+  mensajes-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mensajes_frontend
+    restart: always
+    ports:
+      - "5047:5173"
+    volumes:
+      - .:/app
+      - node_modules_frontend:/app/node_modules
+    env_file:
+      - .env
+    networks:
+      - backend-chatbots_backend-net
+
+volumes:
+  node_modules_frontend:
+
+networks:
+  backend-chatbots_backend-net:
+    external: true
